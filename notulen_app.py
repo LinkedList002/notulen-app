@@ -2,6 +2,7 @@ import streamlit as st
 import openai
 import tempfile
 import os
+from openai import OpenAI
 
 # Gunakan API key dari secret
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -22,8 +23,14 @@ if uploaded_file:
 
     # Transkripsi dengan Whisper
     with st.spinner("Mentranskripsi audio..."):
-        audio_file = open(audio_path, "rb")
-        transcript = openai.Audio.transcribe("whisper-1", audio_file, language="id")
+            client = OpenAI()
+
+            audio_file = open(audio_path, "rb")
+            transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
+            language="id"
+    )
         text_transcript = transcript["text"]
 
     st.subheader("📄 Transkrip")
@@ -41,15 +48,12 @@ Format poin-poin. Sertakan:
 - Keputusan
 - Tugas dan tindak lanjut
 """
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Kamu adalah asisten yang ahli merangkum rapat."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.4
-        )
-        summary = response.choices[0].message.content
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[...],
+        temperature=0.4
+    )
+    summary = response.choices[0].message.content
 
     st.subheader("📝 Notulen Otomatis")
     st.text_area("Notulen:", value=summary, height=300)
