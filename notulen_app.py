@@ -1,11 +1,10 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 import tempfile
 import os
-from openai import OpenAI
 
-# Gunakan API key dari secret
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Inisialisasi client OpenAI
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Notulen Otomatis", layout="centered")
 st.title("📝 Aplikasi Notulen Rapat Otomatis")
@@ -21,17 +20,15 @@ if uploaded_file:
 
     st.success("✅ File berhasil diupload. Memproses...")
 
-    # Transkripsi dengan Whisper
+    # Transkripsi dengan Whisper API
     with st.spinner("Mentranskripsi audio..."):
-            client = OpenAI()
-
-            audio_file = open(audio_path, "rb")
+        with open(audio_path, "rb") as audio_file:
             transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file,
-            language="id"
-    )
-        text_transcript = transcript["text"]
+                model="whisper-1",
+                file=audio_file,
+                language="id"
+            )
+            text_transcript = transcript.text
 
     st.subheader("📄 Transkrip")
     st.text_area("Hasil transkripsi:", value=text_transcript, height=300)
@@ -48,12 +45,15 @@ Format poin-poin. Sertakan:
 - Keputusan
 - Tugas dan tindak lanjut
 """
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[...],
-        temperature=0.4
-    )
-    summary = response.choices[0].message.content
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Kamu adalah asisten yang ahli merangkum rapat."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4
+        )
+        summary = response.choices[0].message.content
 
     st.subheader("📝 Notulen Otomatis")
     st.text_area("Notulen:", value=summary, height=300)
