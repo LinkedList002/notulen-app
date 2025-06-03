@@ -1,0 +1,59 @@
+import streamlit as st
+import openai
+import tempfile
+import os
+
+# Gunakan API key dari secret
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+st.set_page_config(page_title="Notulen Otomatis", layout="centered")
+st.title("📝 Aplikasi Notulen Rapat Otomatis")
+st.write("Upload file audio rapat, dan dapatkan transkripsi + notulen otomatis dalam Bahasa Indonesia.")
+
+# Upload file audio
+uploaded_file = st.file_uploader("🎙 Upload file audio (.mp3, .m4a, .wav, dll)", type=["mp3", "m4a", "wav", "mp4"])
+
+if uploaded_file:
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        audio_path = tmp_file.name
+
+    st.success("✅ File berhasil diupload. Memproses...")
+
+    # Transkripsi dengan Whisper
+    with st.spinner("Mentranskripsi audio..."):
+        audio_file = open(audio_path, "rb")
+        transcript = openai.Audio.transcribe("whisper-1", audio_file, language="id")
+        text_transcript = transcript["text"]
+
+    st.subheader("📄 Transkrip")
+    st.text_area("Hasil transkripsi:", value=text_transcript, height=300)
+
+    # Ringkasan otomatis dengan GPT
+    with st.spinner("Membuat notulen otomatis..."):
+        prompt = f"""
+Tolong buatkan notulen rapat dalam Bahasa Indonesia berdasarkan transkrip berikut:
+
+{text_transcript}
+
+Format poin-poin. Sertakan:
+- Ringkasan diskusi
+- Keputusan
+- Tugas dan tindak lanjut
+"""
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Kamu adalah asisten yang ahli merangkum rapat."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4
+        )
+        summary = response.choices[0].message.content
+
+    st.subheader("📝 Notulen Otomatis")
+    st.text_area("Notulen:", value=summary, height=300)
+
+    st.download_button("💾 Unduh Notulen", summary, file_name="notulen_rapat.txt")
+
+    os.remove(audio_path)
