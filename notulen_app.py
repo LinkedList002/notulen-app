@@ -10,11 +10,19 @@ st.set_page_config(page_title="Notulen Otomatis", layout="centered")
 st.title("📝 Aplikasi Notulen Rapat Otomatis")
 st.write("Upload file audio rapat, dan dapatkan transkripsi + notulen otomatis dalam Bahasa Indonesia.")
 
+# Format yang didukung oleh Whisper API
+SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
+
 # Upload file audio
-uploaded_file = st.file_uploader("🎙 Upload file audio (.mp3, .m4a, .wav, dll)", type=["mp3", "m4a", "wav", "mp4"])
+uploaded_file = st.file_uploader("🎙 Upload file audio (.mp3, .m4a, .wav, dll)", type=SUPPORTED_FORMATS)
 
 if uploaded_file:
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+    file_ext = uploaded_file.name.split(".")[-1].lower()
+    if file_ext not in SUPPORTED_FORMATS:
+        st.error(f"❌ Format file tidak didukung: .{file_ext}. Format yang didukung: {', '.join(SUPPORTED_FORMATS)}")
+        st.stop()
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp_file:
         tmp_file.write(uploaded_file.read())
         audio_path = tmp_file.name
 
