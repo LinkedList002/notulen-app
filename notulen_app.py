@@ -6,9 +6,9 @@ import os
 # Inisialisasi client OpenAI
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.set_page_config(page_title="Notulen Otomatis", layout="centered")
-st.title("📝 Aplikasi Notulen Rapat Otomatis")
-st.write("Upload file audio rapat, dan dapatkan transkripsi + notulen otomatis dalam Bahasa Indonesia.")
+st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
+st.title("📝 Aplikasi Notulen Meeting")
+st.write("Upload file audio hasil meeting, engine AI Whisper+OpenAI")
 
 # Format yang didukung oleh Whisper API
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
@@ -43,20 +43,38 @@ if uploaded_file:
 
     # Ringkasan otomatis dengan GPT
     with st.spinner("Membuat notulen otomatis..."):
+        system_message = """Anda adalah asisten ahli yang mengkhususkan diri dalam membuat notulen rapat yang ringkas dan dapat ditindaklanjuti dari transkrip audio. Tugas Anda adalah mengekstrak wawasan, diskusi kunci, dan langkah-langkah selanjutnya yang dapat ditindaklanjuti dari teks yang diberikan."""
+        
         prompt = f"""
-Tolong buatkan notulen rapat dalam Bahasa Indonesia berdasarkan transkrip berikut:
+        1. Poin-poin Diskusi Utama
+        - Topik yang dibahas
+        - Wawasan penting
+        - Percakapan signifikan
+    
+        2. Poin-poin Penting
+        - Pembelajaran inti
+        - Wawasan kritis
+        - Implikasi strategis
+    
+        3. Tindak Lanjut
+        - Tugas atau langkah selanjutnya
+        - Prioritas tindakan yang jelas
+        - Tanggung jawab yang disebutkan (jika ada)
 
 {text_transcript}
 
-Format poin-poin. Sertakan:
-- Ringkasan diskusi
-- Keputusan
-- Tugas dan tindak lanjut
-"""
+        Pedoman:
+        - Gunakan Bahasa Indonesia yang baik dan benar
+        - Jangan gunakan placeholder seperti '[Tanggal]' atau '[Nama]'
+        - Sajikan informasi dengan ringkas dan jelas
+        - Prioritaskan informasi yang dapat ditindaklanjuti
+        - Gunakan format markdown
+        - Jika informasi tidak lengkap atau tidak jelas, beri catatan
+        """
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Kamu adalah asisten yang ahli merangkum rapat."},
+                {"role": "system", "content":system_message},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.4
