@@ -6,7 +6,14 @@ import os
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
-st.image("https://github.com/LinkedList002/notulen-app/blob/main/Logo%20APNM%20New.png?raw=true", layout="centered")
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <img src="https://github.com/LinkedList002/notulen-app/blob/main/Logo%20APNM%20New.png?raw=true" width="150"/>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.title("📝 Aplikasi Notulen Meeting")
 st.write("Upload file audio hasil meeting, engine AI Whisper + OpenAI")
 
