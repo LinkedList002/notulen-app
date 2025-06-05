@@ -9,7 +9,7 @@ st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
 st.markdown(
     """
     <div style='text-align: center;'>
-        <img src='https://raw.githubusercontent.com/username/repo-name/main/logo.png' width='150'/>
+        <img src='https://github.com/LinkedList002/notulen-app/blob/main/Logo%20APNM%20New.png?raw=true' width='150'/>
         <h1>Aplikasi Notulen Meeting</h1>
     </div>
     """,
