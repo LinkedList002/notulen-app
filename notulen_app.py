@@ -8,7 +8,7 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
 st.title("📝 Aplikasi Notulen Meeting")
-st.write("Upload file audio hasil meeting, engine AI Whisper+OpenAI")
+st.write("Upload file audio hasil meeting, engine AI Whisper + OpenAI")
 
 # Format yang didukung oleh Whisper API
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
@@ -44,18 +44,18 @@ if uploaded_file:
     # Ringkasan otomatis dengan GPT
     with st.spinner("Membuat notulen otomatis..."):
         system_message = """Anda adalah asisten ahli yang mengkhususkan diri dalam membuat notulen rapat yang ringkas dan dapat ditindaklanjuti dari transkrip audio. Tugas Anda adalah mengekstrak wawasan, diskusi kunci, dan langkah-langkah selanjutnya yang dapat ditindaklanjuti dari teks yang diberikan."""
-        
+
         prompt = f"""
         1. Poin-poin Diskusi Utama
         - Topik yang dibahas
         - Wawasan penting
         - Percakapan signifikan
-    
+
         2. Poin-poin Penting
         - Pembelajaran inti
         - Wawasan kritis
         - Implikasi strategis
-    
+
         3. Tindak Lanjut
         - Tugas atau langkah selanjutnya
         - Prioritas tindakan yang jelas
