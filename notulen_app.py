@@ -87,6 +87,6 @@ Pedoman:
     st.download_button("💾 Unduh Notulen", st.session_state.summary, file_name="notulen_rapat.txt")
 
     if st.button("🔄 Proses file baru"):
-        st.session_state.transcript = None
-        st.session_state.summary = None
-        st.experimental_rerun()
+        st.session_state.clear()
+        st.success("Silakan upload file audio baru untuk mulai proses lagi.")
+        st.stop()
