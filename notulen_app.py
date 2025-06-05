@@ -6,6 +6,7 @@ import os
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
+st.Image("https://drive.google.com/file/d/1raBjdTj58nk7R21Dag7T34Io4otQzSM9/view?usp=sharing",width=120)
 st.title("📝 Aplikasi Notulen Meeting")
 st.write("Upload file audio hasil meeting, engine AI Whisper + OpenAI")
 
