@@ -15,7 +15,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.write("Upload file audio hasil meeting, engine AI Whisper + OpenAI")
+st.write("Upload file audio hasil meeting, Model AI Whisper + GPTOpenAI")
 
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
 
