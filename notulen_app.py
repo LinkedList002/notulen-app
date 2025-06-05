@@ -10,6 +10,7 @@ st.markdown(
     """
     <div style="text-align: center;">
         <img src="https://github.com/LinkedList002/notulen-app/blob/main/Logo%20APNM%20New.png?raw=true" width="150"/>
+        <h1>Aplikasi Notulen Meeting</h1>
     </div>
     """,
     unsafe_allow_html=True
