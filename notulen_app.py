@@ -8,14 +8,14 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
 st.markdown(
     """
-    <div style="text-align: center;">
-        <img src="https://github.com/LinkedList002/notulen-app/blob/main/Logo%20APNM%20New.png?raw=true" width="150"/>
+    <div style='text-align: center;'>
+        <img src='https://raw.githubusercontent.com/username/repo-name/main/logo.png' width='150'/>
         <h1>Aplikasi Notulen Meeting</h1>
     </div>
     """,
     unsafe_allow_html=True
 )
-st.title("Aplikasi Notulen Meeting")
+//st.title("Aplikasi Notulen Meeting")
 st.write("Upload file audio hasil meeting, engine AI Whisper + OpenAI")
 
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
