@@ -14,7 +14,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.title("📝 Aplikasi Notulen Meeting")
+st.title("Aplikasi Notulen Meeting")
 st.write("Upload file audio hasil meeting, engine AI Whisper + OpenAI")
 
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
