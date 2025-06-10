@@ -2,11 +2,13 @@ import streamlit as st
 from openai import OpenAI
 from pydub import AudioSegment
 from pydub.utils import which
-import math
 import tempfile
 import os
 
+# Pastikan ffmpeg dikenali
 AudioSegment.converter = which("ffmpeg")
+
+# Inisialisasi OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
@@ -19,32 +21,37 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.write("Upload file audio hasil meeting, Model AI Whisper + GPTOpenAI")
+st.write("Upload file audio hasil meeting, Model AI Whisper + GPT OpenAI")
 
+# Format yang didukung
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
 
+# Inisialisasi state
 if "transcript" not in st.session_state:
     st.session_state.transcript = None
 if "summary" not in st.session_state:
     st.session_state.summary = None
 
+# Upload file
 uploaded_file = st.file_uploader("🎙 Upload file audio (.mp3, .m4a, .wav, dll)", type=SUPPORTED_FORMATS)
 
+# Fungsi untuk split audio
+def split_audio(file_path, chunk_length_ms=5 * 60 * 1000):  # 5 menit
+    audio = AudioSegment.from_file(file_path)
+    chunks = []
+    for i in range(0, len(audio), chunk_length_ms):
+        chunk = audio[i:i + chunk_length_ms]
+        chunk_path = f"{file_path}_part{i//chunk_length_ms}.mp3"
+        chunk.export(chunk_path, format="mp3")
+        chunks.append(chunk_path)
+    return chunks
+
+# Proses file jika di-upload
 if uploaded_file and st.session_state.transcript is None:
     file_ext = uploaded_file.name.split(".")[-1].lower()
     if file_ext not in SUPPORTED_FORMATS:
         st.error(f"❌ Format file tidak didukung: .{file_ext}")
         st.stop()
-
-    def split_audio(file_path, chunk_length_ms=5 * 60 * 1000):  # 5 menit
-        audio = AudioSegment.from_file(file_path)
-        chunks = []
-        for i in range(0, len(audio), chunk_length_ms):
-            chunk = audio[i:i + chunk_length_ms]
-            chunk_path = f"{file_path}_part{i//chunk_length_ms}.mp3"
-            chunk.export(chunk_path, format="mp3")
-            chunks.append(chunk_path)
-        return chunks
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp_file:
         tmp_file.write(uploaded_file.read())
@@ -52,12 +59,11 @@ if uploaded_file and st.session_state.transcript is None:
 
     st.success("✅ File berhasil diupload. Memproses...")
 
-    # Proses transkripsi dengan split
     with st.spinner("🔄 Memecah audio dan mentranskripsi..."):
         try:
             chunk_paths = split_audio(audio_path)
-
             transcripts = []
+
             for idx, chunk in enumerate(chunk_paths):
                 st.info(f"📤 Memproses bagian {idx + 1} dari {len(chunk_paths)}...")
                 with open(chunk, "rb") as f:
@@ -69,11 +75,10 @@ if uploaded_file and st.session_state.transcript is None:
                     transcripts.append(result.text)
                 os.remove(chunk)
 
-            full_transcript = "\n".join(transcripts)
-            st.session_state.transcript = full_transcript
+            st.session_state.transcript = "\n".join(transcripts)
 
         except Exception as e:
-            st.error(f"Terjadi kesalahan saat transkripsi: {e}")
+            st.error(f"❌ Terjadi kesalahan saat transkripsi: {e}")
             st.stop()
         finally:
             os.remove(audio_path)
