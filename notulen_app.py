@@ -1,12 +1,8 @@
 import streamlit as st
 from openai import OpenAI
-from pydub import AudioSegment
-from pydub.utils import which
 import tempfile
 import os
-
-# Pastikan ffmpeg dikenali
-AudioSegment.converter = which("ffmpeg")
+import subprocess
 
 # Inisialisasi OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -36,15 +32,26 @@ if "summary" not in st.session_state:
 uploaded_file = st.file_uploader("🎙 Upload file audio (.mp3, .m4a, .wav, dll)", type=SUPPORTED_FORMATS)
 
 # Fungsi untuk split audio
-def split_audio(file_path, chunk_length_ms=5 * 60 * 1000):  # 5 menit
-    audio = AudioSegment.from_file(file_path)
-    chunks = []
-    for i in range(0, len(audio), chunk_length_ms):
-        chunk = audio[i:i + chunk_length_ms]
-        chunk_path = f"{file_path}_part{i//chunk_length_ms}.mp3"
-        chunk.export(chunk_path, format="mp3")
-        chunks.append(chunk_path)
-    return chunks
+def split_audio_ffmpeg(input_path, chunk_length_sec=300):  # 5 menit
+    output_files = []
+    duration_cmd = [
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", input_path
+    ]
+    duration = float(subprocess.check_output(duration_cmd).decode().strip())
+    total_parts = int(duration // chunk_length_sec) + 1
+
+    for i in range(total_parts):
+        start_time = i * chunk_length_sec
+        output_path = f"{input_path}_part{i}.mp3"
+        split_cmd = [
+            "ffmpeg", "-y", "-i", input_path, "-ss", str(start_time), "-t", str(chunk_length_sec),
+            "-acodec", "copy", output_path
+        ]
+        subprocess.run(split_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        output_files.append(output_path)
+
+    return output_files
 
 # Proses file jika di-upload
 if uploaded_file and st.session_state.transcript is None:
