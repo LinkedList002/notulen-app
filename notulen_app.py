@@ -1,5 +1,6 @@
 import streamlit as st
 from openai import OpenAI
+from pydub import AudioSegment
 from pydub.utils import wich
 import math
 import tempfile
