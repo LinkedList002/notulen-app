@@ -1,10 +1,11 @@
 import streamlit as st
 from openai import OpenAI
-from pydub import AudioSegment
+from pydub.utils import wich
 import math
 import tempfile
 import os
 
+AudioSegment.converter = which("ffmpeg")
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
