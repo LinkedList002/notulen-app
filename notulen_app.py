@@ -1,5 +1,7 @@
 import streamlit as st
 from openai import OpenAI
+from pydub import AudioSegment
+import math
 import tempfile
 import os
 
@@ -32,27 +34,47 @@ if uploaded_file and st.session_state.transcript is None:
         st.error(f"❌ Format file tidak didukung: .{file_ext}")
         st.stop()
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        audio_path = tmp_file.name
+    def split_audio(file_path, chunk_length_ms=5 * 60 * 1000):  # 5 menit
+    audio = AudioSegment.from_file(file_path)
+    chunks = []
+    for i in range(0, len(audio), chunk_length_ms):
+        chunk = audio[i:i + chunk_length_ms]
+        chunk_path = f"{file_path}_part{i//chunk_length_ms}.mp3"
+        chunk.export(chunk_path, format="mp3")
+        chunks.append(chunk_path)
+    return chunks
 
-    st.success("✅ File berhasil diupload. Memproses...")
+with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp_file:
+    tmp_file.write(uploaded_file.read())
+    audio_path = tmp_file.name
 
-    # Proses transkripsi dengan pengecekan error
-    with st.spinner("Mentranskripsi audio..."):
-        try:
-            with open(audio_path, "rb") as audio_file:
+st.success("✅ File berhasil diupload. Memproses...")
+
+# Proses transkripsi dengan split
+with st.spinner("🔄 Memecah audio dan mentranskripsi..."):
+    try:
+        chunk_paths = split_audio(audio_path)
+
+        transcripts = []
+        for idx, chunk in enumerate(chunk_paths):
+            st.info(f"📤 Memproses bagian {idx + 1} dari {len(chunk_paths)}...")
+            with open(chunk, "rb") as f:
                 result = client.audio.transcriptions.create(
                     model="whisper-1",
-                    file=audio_file,
+                    file=f,
                     language="id"
                 )
-                st.session_state.transcript = result.text if hasattr(result, "text") else "Gagal membaca hasil transkrip."
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat transkripsi: {e}")
-            st.stop()
-        finally:
-            os.remove(audio_path)
+                transcripts.append(result.text)
+            os.remove(chunk)
+
+        full_transcript = "\n".join(transcripts)
+        st.session_state.transcript = full_transcript
+
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat transkripsi: {e}")
+        st.stop()
+    finally:
+        os.remove(audio_path)
 
 # Tampilkan hasil transkripsi
 if st.session_state.transcript:
