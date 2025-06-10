@@ -68,7 +68,7 @@ if uploaded_file and st.session_state.transcript is None:
 
     with st.spinner("🔄 Memecah audio dan mentranskripsi..."):
         try:
-            chunk_paths = split_audio(audio_path)
+            chunk_paths = split_audio_ffmpeg(audio_path)
             transcripts = []
 
             for idx, chunk in enumerate(chunk_paths):
