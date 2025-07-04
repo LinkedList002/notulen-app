@@ -1,12 +1,12 @@
 import streamlit as st
-from openai import OpenAI
+import openai
 import tempfile
 import os
 import subprocess
 
-# Inisialisasi Groq client
-client = OpenAI(api_key=st.secrets["GROQ_API_KEY"])
-client.api_base = "https://api.groq.com/openai/v1"
+# Inisialisasi Groq API
+openai.api_key = st.secrets["GROQ_API_KEY"]
+openai.api_base = "https://api.groq.com/openai/v1"
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
 st.markdown(
@@ -70,8 +70,8 @@ if uploaded_file and st.session_state.transcript is None:
             for idx, chunk in enumerate(chunk_paths):
                 st.info(f"📤 Memproses bagian {idx + 1} dari {len(chunk_paths)}...")
                 with open(chunk, "rb") as f:
-                    result = client.audio.transcriptions.create(
-                        model="whisper-large-v3",  # model multilingual
+                    result = openai.Audio.transcribe(
+                        model="whisper-large-v3",  # multilingual model di Groq
                         file=f,
                         response_format="text",
                         language="id"  # Bahasa Indonesia
@@ -111,8 +111,8 @@ Pedoman:
 - Jika informasi tidak lengkap atau tidak jelas, beri catatan
 """
 
-                response = client.chat.completions.create(
-                    model="llama3-70b-8192",  # Groq LLM
+                response = openai.ChatCompletion.create(
+                    model="llama3-70b-8192",  # LLM dari Groq
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt}
