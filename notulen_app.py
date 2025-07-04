@@ -3,6 +3,7 @@ import openai
 import tempfile
 import os
 import subprocess
+import textwrap
 
 # Inisialisasi Groq API
 openai.api_key = st.secrets["GROQ_API_KEY"]
@@ -71,13 +72,12 @@ if uploaded_file and st.session_state.transcript is None:
                 st.info(f"📤 Memproses bagian {idx + 1} dari {len(chunk_paths)}...")
                 with open(chunk, "rb") as f:
                     result = openai.Audio.transcribe(
-                        model="whisper-large-v3",  # multilingual model di Groq
+                        model="whisper-large-v3",
                         file=f,
                         response_format="text",
-                        language="id"  # Bahasa Indonesia
+                        language="id"
                     )
                     transcripts.append(result)
-
                 os.remove(chunk)
 
             st.session_state.transcript = "\n".join(transcripts)
@@ -92,15 +92,23 @@ if st.session_state.transcript:
     st.subheader("📄 Transkrip")
     st.text_area("Hasil transkripsi:", value=st.session_state.transcript, height=300)
 
+    st.download_button("⬇️ Unduh Transkrip", data=st.session_state.transcript, file_name="transkrip.txt")
+
     if st.session_state.summary is None:
         with st.spinner("Membuat notulen otomatis..."):
             try:
-                system_message = "Kamu adalah asisten yang ahli merangkum rapat."
+                MAX_TOKENS_LIMIT = 5000
+                if len(st.session_state.transcript) > MAX_TOKENS_LIMIT:
+                    st.warning("Transkrip terlalu panjang, hanya sebagian digunakan untuk ringkasan.")
+                    transcript_input = st.session_state.transcript[:MAX_TOKENS_LIMIT]
+                else:
+                    transcript_input = st.session_state.transcript
 
+                system_message = "Kamu adalah asisten yang ahli merangkum rapat."
                 prompt = f"""
 Tolong buatkan notulen rapat dalam Bahasa Indonesia berdasarkan transkrip berikut:
 
-{st.session_state.transcript}
+{transcript_input}
 
 Pedoman:
 - Gunakan Bahasa Indonesia yang baik dan benar
@@ -112,7 +120,7 @@ Pedoman:
 """
 
                 response = openai.ChatCompletion.create(
-                    model="llama3-70b-8192",  # LLM dari Groq
+                    model="llama3-70b-8192",
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt}
@@ -126,7 +134,8 @@ Pedoman:
 
     st.subheader("📝 Notulen Otomatis")
     st.text_area("Notulen:", value=st.session_state.summary, height=300)
-    st.download_button("💾 Unduh Notulen", st.session_state.summary, file_name="notulen_rapat.txt")
+
+    st.download_button("⬇️ Unduh Notulen", data=st.session_state.summary, file_name="notulen_rapat.txt")
 
     if st.button("🔄 Proses file baru"):
         st.session_state.clear()
