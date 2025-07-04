@@ -4,8 +4,9 @@ import tempfile
 import os
 import subprocess
 
-# Inisialisasi OpenAI client
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# Inisialisasi Groq client
+client = OpenAI(api_key=st.secrets["GROQ_API_KEY"])
+client.api_base = "https://api.groq.com/openai/v1"
 
 st.set_page_config(page_title="Transkrip Hasil Meeting", layout="centered")
 st.markdown(
@@ -17,22 +18,18 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.write("Upload file audio hasil meeting, Model AI Whisper + GPT OpenAI")
+st.write("Upload file audio hasil meeting, AI akan transkrip dan membuat notulen otomatis (via Groq)")
 
-# Format yang didukung
 SUPPORTED_FORMATS = ["flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"]
 
-# Inisialisasi state
 if "transcript" not in st.session_state:
     st.session_state.transcript = None
 if "summary" not in st.session_state:
     st.session_state.summary = None
 
-# Upload file
 uploaded_file = st.file_uploader("🎙 Upload file audio (.mp3, .m4a, .wav, dll)", type=SUPPORTED_FORMATS)
 
-# Fungsi untuk split audio
-def split_audio_ffmpeg(input_path, chunk_length_sec=300):  # 5 menit
+def split_audio_ffmpeg(input_path, chunk_length_sec=300):
     output_files = []
     duration_cmd = [
         "ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -53,7 +50,6 @@ def split_audio_ffmpeg(input_path, chunk_length_sec=300):  # 5 menit
 
     return output_files
 
-# Proses file jika di-upload
 if uploaded_file and st.session_state.transcript is None:
     file_ext = uploaded_file.name.split(".")[-1].lower()
     if file_ext not in SUPPORTED_FORMATS:
@@ -75,11 +71,13 @@ if uploaded_file and st.session_state.transcript is None:
                 st.info(f"📤 Memproses bagian {idx + 1} dari {len(chunk_paths)}...")
                 with open(chunk, "rb") as f:
                     result = client.audio.transcriptions.create(
-                        model="whisper-1",
+                        model="whisper-large-v3",  # model multilingual
                         file=f,
-                        language="id"
+                        response_format="text",
+                        language="id"  # Bahasa Indonesia
                     )
-                    transcripts.append(result.text)
+                    transcripts.append(result)
+
                 os.remove(chunk)
 
             st.session_state.transcript = "\n".join(transcripts)
@@ -90,7 +88,6 @@ if uploaded_file and st.session_state.transcript is None:
         finally:
             os.remove(audio_path)
 
-# Tampilkan hasil transkripsi
 if st.session_state.transcript:
     st.subheader("📄 Transkrip")
     st.text_area("Hasil transkripsi:", value=st.session_state.transcript, height=300)
@@ -113,8 +110,9 @@ Pedoman:
 - Gunakan format markdown
 - Jika informasi tidak lengkap atau tidak jelas, beri catatan
 """
+
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="llama3-70b-8192",  # Groq LLM
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt}
